@@ -4,6 +4,8 @@ import com.cy.store.entity.Address;
 import com.cy.store.service.IAddressService;
 import com.cy.store.util.JsonResult;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -30,6 +32,7 @@ public class AddressController extends BaseController {
         return new JsonResult<Void>(OK);
     }
 
+    @GetMapping("getAddress")
     public JsonResult<List<Address>> getByUid(HttpSession session){
         //获取当前用户的id
         Integer uid=getUidFromSession(session);
@@ -38,4 +41,16 @@ public class AddressController extends BaseController {
         //响应成功
         return new JsonResult<List<Address>>(OK,data);
     }
+
+    @RequestMapping("{aid}/set_default")
+    public JsonResult<Void> setDefault(@PathVariable("aid") Integer aid,HttpSession session){
+        //获取当前登录的用户id和用户名
+        Integer uid = getUidFromSession(session);
+        String username = getUsernameFromSession(session);
+        //调用业务方法执行业务
+        addressService.setDefault(aid,uid,username);
+        //响应成功
+        return new JsonResult<Void>(OK);
+    }
+
 }

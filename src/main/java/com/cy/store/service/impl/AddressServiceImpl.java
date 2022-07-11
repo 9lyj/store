@@ -31,7 +31,7 @@ public class AddressServiceImpl implements IAddressService {
         //统计当前用户收获地址数量
         Integer count = addressMapper.countByUid(uid);
         // 判断数量是否达到上限值
-        if(count>maxCount){
+        if(count >= maxCount){
             // 是：抛出AddressCountLimitException
             throw new AddressCountLimitException("收货地址数量已经达到上限(\" + maxCount + \")！");
         }
@@ -80,5 +80,36 @@ public class AddressServiceImpl implements IAddressService {
             address.setModifiedTime(null);
         }*/
         return list;
+    }
+
+    @Transactional
+    @Override
+    public void setDefault(Integer aid, Integer uid, String username){
+        // 根据参数aid，调用addressMapper中的findByAid()查询收货地址数据
+        Address result = addressMapper.findByAid(aid);
+        // 判断查询结果是否为null
+        if (result == null) {
+            // 是：抛出AddressNotFoundException
+            throw new AddressNotFoundException("尝试访问的收货地址数据不存在");
+        }
+        // 判断查询结果中的uid与参数uid是否不一致(使用equals()判断)
+        if(!result.getUid().equals(uid)){
+            // 是：抛出AccessDeniedException
+            throw new AccessDeniedException("非法访问的异常");
+        }
+        // 调用addressMapper的updateNonDefaultByUid()将该用户的所有收货地址全部设置为非默认，并获取返回受影响的行数
+        Integer rows = addressMapper.updateNonDefaultByUid(uid);
+        // 判断受影响的行数是否小于1(不大于0)
+        if (rows < 1) {
+            // 是：抛出UpdateException
+            throw new UpdateException("设置默认收货地址时出现未知错误[1]");
+        }
+
+        // 调用addressMapper的updateDefaultByAid()将指定aid的收货地址设置为默认，并获取返回的受影响的行数
+        rows = addressMapper.updateDefaultByAid(aid,username,new Date());
+        if(rows!=1){
+            // 是：抛出UpdateException
+            throw new UpdateException("设置默认收货地址时出现未知错误[2]");
+        }
     }
 }
